@@ -1,56 +1,66 @@
 % scoreSubjectResponses.m
 % Author: Kevin Chu
-% Last Modified: 03/27/2020
+% Last Modified: 08/04/2020
 
-% DESCRIPTION: This script extracts a subject's responses from their .mat 
-% file and calculates the score for each task.
+function scoreSubjectResponses(subject, inDir, outDir, inFile, isSorted, truthFile, dictFile)
+    % This function extracts a subject's responses from their .mat file and 
+    % calculates their score for each task.
+    %
+    % Args:
+    %   -subject (str): name of subject's folder
+    %   -inDir (str): directory containing data for current study
+    %   -outDir (str): directory where scores will be saved
+    %   -isSorted (boolean): whether to sort scores by condition (true) or
+    %   chronological order (false)
+    %   -truthFile (str): .mat file with known sentences
+    %   -dictFile (str): dictionary file with word to phoneme mappings
+    %
+    % Returns:
+    %   -none
 
-clear; close all; clc;
+    % Full file path
+    inFile = sprintf('%s%s%s%s', inDir, subject, filesep, inFile);
 
-%% USER INPUTS
-subject = 'subject01';
-inDir = './';
-outDir = './';
-inFile = 'taskList_Final.mat';
-outFile = 'scores.mat';
-truthFile = 'truth_files/hintListTruth.mat';
-dictFile = 'dictionary.mat';
+    % Load necessary files
+    load(inFile); 
+    load(truthFile);
+    load(dictFile);
 
-%% CODE
-% Full file path
-inFile = sprintf('%s%s%s%s', inDir, subject, filesep, inFile);
-outFile = sprintf('%s%s%s%s', outDir, subject, filesep, outFile);
+    allTaskInfo = struct([]);
 
-% Load necessary files
-load(inFile); 
-load(truthFile);
-load(dictFile);
+    % Iterate over tasks and aggregate scores over sentences
+    k = 1;
+    for i = 1:numel(taskListObj.taskList)
+        % Skip the training task and only score the test tasks
+        if ~strcmp(taskListObj.taskList{i}.taskTitle, 'Test Automated Vocoder Training')
+            taskInfo = scoreTask(taskListObj.taskList{1, i}, sentenceStruct);
 
-allTaskInfo = struct([]);
-
-% Iterate over tasks and aggregate scores over sentences
-k = 1;
-for i = 1:numel(taskListObj.taskList)
-    % Skip the training task and only score the test tasks
-    if ~strcmp(taskListObj.taskList{i}.taskTitle, 'Test Automated Vocoder Training')
-        taskInfo = scoreTask(taskListObj.taskList{1, i}, sentenceStruct);
-
-        % Format into structure array
-        fields = fieldnames(taskInfo);
-        for j = 1:numel(fields)
-            allTaskInfo(k).(fields{j}) = taskInfo.(fields{j});
+            % Format into structure array
+            fields = fieldnames(taskInfo);
+            for j = 1:numel(fields)
+                allTaskInfo(k).(fields{j}) = taskInfo.(fields{j});
+            end
+            k = k+1;
         end
-        k = k+1;
     end
+
+    % Sorts conditions in alphabetical/numeric order
+    if isSorted
+        % Sort on condition and isMitigated
+        conditions = fields(~strcmp(fields, 'performance'));
+        T = struct2table(allTaskInfo);
+        sortedT = sortrows(T, conditions);
+        allTaskInfo = table2struct(sortedT);
+
+        % Combine scores from repeated conditions
+        allTaskInfo = combineScoresRepeatedTasks(allTaskInfo);
+
+        outFile = sprintf('%s%s%s%s', outDir, subject, filesep, 'scores_sorted.mat');
+    % Sorts conditions in chronological order
+    else
+        outFile = sprintf('%s%s%s%s', outDir, subject, filesep, 'scores_unsorted.mat');
+    end
+
+    save(outFile, 'allTaskInfo');
+    
 end
-
-% Sort on condition and isMitigated
-conditions = fields(~strcmp(fields, 'performance'));
-T = struct2table(allTaskInfo);
-sortedT = sortrows(T, conditions);
-allTaskInfo = table2struct(sortedT);
-
-% Combine scores from repeated conditions
-allTaskInfo = combineScoresRepeatedTasks(allTaskInfo);
-
-save(outFile, 'allTaskInfo');
