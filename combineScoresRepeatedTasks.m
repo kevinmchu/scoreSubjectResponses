@@ -38,9 +38,11 @@ function allTaskInfoNew = combineScoresRepeatedTasks(allTaskInfo)
             allTaskInfoNew(end).performance.propCorrectWords = allTaskInfoNew(end).performance.numCorrectWords/allTaskInfoNew(end).performance.numWords;
             
             % Phonemes
-            allTaskInfoNew(end).performance.numCorrectPhonemes = allTaskInfoNew(end).performance.numCorrectPhonemes + allTaskInfo(i).performance.numCorrectPhonemes;
-            allTaskInfoNew(end).performance.numPhonemes = allTaskInfoNew(end).performance.numPhonemes + allTaskInfo(i).performance.numPhonemes;
-            allTaskInfoNew(end).performance.propCorrectPhonemes = allTaskInfoNew(end).performance.numCorrectPhonemes/allTaskInfoNew(end).performance.numPhonemes;
+            if isfield(allTaskInfoNew(end).performance, 'numPhonemes')
+                allTaskInfoNew(end).performance.numCorrectPhonemes = allTaskInfoNew(end).performance.numCorrectPhonemes + allTaskInfo(i).performance.numCorrectPhonemes;
+                allTaskInfoNew(end).performance.numPhonemes = allTaskInfoNew(end).performance.numPhonemes + allTaskInfo(i).performance.numPhonemes;
+                allTaskInfoNew(end).performance.propCorrectPhonemes = allTaskInfoNew(end).performance.numCorrectPhonemes/allTaskInfoNew(end).performance.numPhonemes;
+            end
         end
     end
     

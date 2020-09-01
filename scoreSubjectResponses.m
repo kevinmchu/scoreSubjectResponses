@@ -1,8 +1,8 @@
 % scoreSubjectResponses.m
 % Author: Kevin Chu
-% Last Modified: 08/04/2020
+% Last Modified: 08/19/2020
 
-function scoreSubjectResponses(subject, inDir, outDir, inFile, isSorted, truthFile, dictFile)
+function scoreSubjectResponses(subject, inDir, outDir, inFile, isSorted, scorePhonemes, excludedTasks, truthFile, dictFile)
     % This function extracts a subject's responses from their .mat file and 
     % calculates their score for each task.
     %
@@ -12,6 +12,9 @@ function scoreSubjectResponses(subject, inDir, outDir, inFile, isSorted, truthFi
     %   -outDir (str): directory where scores will be saved
     %   -isSorted (boolean): whether to sort scores by condition (true) or
     %   chronological order (false)
+    %   -scorePhonemes (boolean): whether to score phonemes in addition to
+    %   words
+    %   -excludedTasks (array): excludes specified task indices
     %   -truthFile (str): .mat file with known sentences
     %   -dictFile (str): dictionary file with word to phoneme mappings
     %
@@ -32,8 +35,13 @@ function scoreSubjectResponses(subject, inDir, outDir, inFile, isSorted, truthFi
     k = 1;
     for i = 1:numel(taskListObj.taskList)
         % Skip the training task and only score the test tasks
-        if ~strcmp(taskListObj.taskList{i}.taskTitle, 'Test Automated Vocoder Training')
-            taskInfo = scoreTask(taskListObj.taskList{1, i}, sentenceStruct);
+        if strcmp(taskListObj.taskList{i}.taskTitle, 'Test Automated Vocoder Training')
+            continue
+        % Skip the excluded tasks
+        elseif any(ismember(excludedTasks, i))
+            continue
+        else
+            taskInfo = scoreTask(taskListObj.taskList{1, i}, sentenceStruct, dictionary, scorePhonemes);
 
             % Format into structure array
             fields = fieldnames(taskInfo);

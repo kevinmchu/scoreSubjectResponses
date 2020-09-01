@@ -1,18 +1,17 @@
 % scoreTask.m
 % Author: Kevin Chu
-% Last Modified: 03/01/2020
+% Last Modified: 08/11/2020
 
-function taskInfo = scoreTask(taskList, sentenceStruct)
+function taskInfo = scoreTask(taskList, sentenceStruct, dictionary, scorePhonemes)
     % This function calculates the number of correct words as well as the
     % total number of words for a single task.
     %
     % Args:
     %   -taskList (sttTaskPregeneratedOpenSetSpeechForNormalHearing):
     %   contains task-related information including subject responses
-    %   -sentenceTruth (cell array): contains correct answers to all
-    %   sentences in the database
-    %   -dictionary (struct): structure with words and the phonemes they
-    %   are composed of
+    %   -sentenceStruct ():
+    %   -scorePhonemes (boolean): whether to score phonemes in addition to
+    %   words
     %
     % Returns:
     %   -taskInfo (struct): structure with fields:
@@ -36,10 +35,13 @@ function taskInfo = scoreTask(taskList, sentenceStruct)
     taskInfo.performance.numCorrectWords = 0;
     taskInfo.performance.numWords = 0;
     taskInfo.performance.propCorrectWords = 0;
-%     taskInfo.performance.numCorrectPhonemes = 0;
-%     taskInfo.performance.numPhonemes = 0;
-%     taskInfo.performance.propCorrectPhonemes = 0;
-%     taskInfo.performance.phonemeStruct = getPhonemeStruct;
+    
+    if scorePhonemes
+        taskInfo.performance.numCorrectPhonemes = 0;
+        taskInfo.performance.numPhonemes = 0;
+        taskInfo.performance.propCorrectPhonemes = 0;
+        taskInfo.performance.phonemeStruct = getPhonemeStruct;
+    end
 
     filenames = extractfield(sentenceStruct,'filename');
     
@@ -51,21 +53,28 @@ function taskInfo = scoreTask(taskList, sentenceStruct)
         correctWords = formatSentence(correctStruct(1).sentence);
         currNumCorrectWords = calculateNumCorrectWords(responseWords, correctWords);
         
-%         % Score phonemes
-%         responsePhonemes = sttUtilConvertWordsToPhonemes(strsplit(lower(responseWords)), dictionary);
-%         correctPhonemes = correctStruct(1).phonemes;
-%         isPhonemeCorrect = analyzeCorrectPhonemes(responsePhonemes, correctPhonemes);
-%         correctPhonemes = horzcat(correctPhonemes{:});
-%         isPhonemeCorrect = horzcat(isPhonemeCorrect{:});
-        
         % Accumulate the total # of correct words and total words
         taskInfo.performance.numWords = taskInfo.performance.numWords + numel(strsplit(correctWords));
         taskInfo.performance.numCorrectWords = taskInfo.performance.numCorrectWords + currNumCorrectWords;
         
-%         taskInfo.performance.numPhonemes = taskInfo.performance.numPhonemes + numel(correctPhonemes);
-%         taskInfo.performance.numCorrectPhonemes = taskInfo.performance.numCorrectPhonemes + sum(isPhonemeCorrect);
+        % Score phonemes
+        if scorePhonemes
+            responsePhonemes = sttUtilConvertWordsToPhonemes(strsplit(lower(responseWords)), dictionary);
+            correctPhonemes = correctStruct(1).phonemes;
+            isPhonemeCorrect = analyzeCorrectPhonemes(responsePhonemes, correctPhonemes);
+            correctPhonemes = horzcat(correctPhonemes{:});
+            isPhonemeCorrect = horzcat(isPhonemeCorrect{:});
+            
+            % Accumulate total # of correct phonemes and total phonemes
+            taskInfo.performance.numPhonemes = taskInfo.performance.numPhonemes + numel(correctPhonemes);
+            taskInfo.performance.numCorrectPhonemes = taskInfo.performance.numCorrectPhonemes + sum(isPhonemeCorrect);
+        end
+
     end
     taskInfo.performance.propCorrectWords = taskInfo.performance.numCorrectWords/taskInfo.performance.numWords;
-%     taskInfo.performance.propCorrectPhonemes = taskInfo.performance.numCorrectPhonemes/taskInfo.performance.numPhonemes;
+    
+    if scorePhonemes
+        taskInfo.performance.propCorrectPhonemes = taskInfo.performance.numCorrectPhonemes/taskInfo.performance.numPhonemes;
+    end
 
 end
