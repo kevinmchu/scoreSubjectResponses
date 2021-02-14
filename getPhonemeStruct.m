@@ -18,7 +18,7 @@ function phonemeStruct = getPhonemeStruct
     fricatives = {'S';'SH';'Z';'ZH';'F';'TH';'V';'DH';'HH'}; 
     nasals = {'M';'N';'NG'};
     semivowels = {'L';'R';'W';'Y'};
-    vowels = {'IY';'IH';'EH';'EY';'AE';'AA';'AO';'AW';'AY';'AH';'OH';'OW';'UH';'UW';'ER'};
+    vowels = {'IY';'IH';'EH';'EY';'AE';'AA';'AO';'AW';'AY';'AH';'OH';'OW';'OY';'UH';'UW';'ER'};
     
     % Concatenate
     phonemes = [stops;affricates;fricatives;nasals;semivowels;vowels];
@@ -28,7 +28,11 @@ function phonemeStruct = getPhonemeStruct
                     repmat({'fricative'},numel(fricatives),1);...
                     repmat({'nasal'},numel(nasals),1);...
                     repmat({'semivowel'},numel(semivowels),1);...
-                    repmat({'vowel'},numel(vowels),1)];                
+                    repmat({'vowel'},numel(vowels),1)];
                 
-    phonemeStruct = struct('phoneme', phonemes, 'phonemeType', phonemeTypes);
+    correct = num2cell(zeros(numel(phonemes), 1));
+    
+    total = num2cell(zeros(numel(phonemes), 1));
+                
+    phonemeStruct = struct('phoneme', phonemes, 'phonemeType', phonemeTypes, 'correct', correct, 'total', total);
 end

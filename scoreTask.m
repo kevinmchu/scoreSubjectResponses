@@ -68,6 +68,13 @@ function taskInfo = scoreTask(taskList, sentenceStruct, dictionary, scorePhoneme
             % Accumulate total # of correct phonemes and total phonemes
             taskInfo.performance.numPhonemes = taskInfo.performance.numPhonemes + numel(correctPhonemes);
             taskInfo.performance.numCorrectPhonemes = taskInfo.performance.numCorrectPhonemes + sum(isPhonemeCorrect);
+            
+            % Score phoneme by phoneme basis
+            for j = 1:numel(correctPhonemes)
+                idx = cell2mat(cellfun(@(c)isequal(c, correctPhonemes{j}), extractfield(taskInfo.performance.phonemeStruct,'phoneme'), 'UniformOutput', false));
+                taskInfo.performance.phonemeStruct(idx).correct = taskInfo.performance.phonemeStruct(idx).correct + isPhonemeCorrect(j);
+                taskInfo.performance.phonemeStruct(idx).total = taskInfo.performance.phonemeStruct(idx).total + 1;
+            end
         end
 
     end
