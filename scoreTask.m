@@ -49,29 +49,39 @@ function taskInfo = scoreTask(taskList, sentenceStruct, dictionary, scorePhoneme
     for i = 1:numel(taskList.stimulusList)
         % Count the number of correct words in the subject's response
         responseWords = formatSentence(taskList.log.responses{i});
-        correctStruct = sentenceStruct(cellfun(@(c)strcmp(c,taskList.stimulusList{i}),filenames));
-        correctWords = formatSentence(correctStruct(1).sentence);
-        currNumCorrectWords = calculateNumCorrectWords(responseWords, correctWords);
+        trueStruct = sentenceStruct(cellfun(@(c)strcmp(c,strrep(taskList.stimulusList{i}, '.wav', '')),filenames));
+        trueWords = formatSentence(trueStruct(1).sentence);
+        currNumCorrectWords = calculateNumCorrectWords(responseWords, trueWords);
         
         % Accumulate the total # of correct words and total words
-        taskInfo.performance.numWords = taskInfo.performance.numWords + numel(strsplit(correctWords));
+        taskInfo.performance.numWords = taskInfo.performance.numWords + numel(strsplit(trueWords));
         taskInfo.performance.numCorrectWords = taskInfo.performance.numCorrectWords + currNumCorrectWords;
         
         % Score phonemes
         if scorePhonemes
-            responsePhonemes = sttUtilConvertWordsToPhonemes(strsplit(lower(responseWords)), dictionary);
-            correctPhonemes = correctStruct(1).phonemes;
-            isPhonemeCorrect = analyzeCorrectPhonemes(responsePhonemes, correctPhonemes);
-            correctPhonemes = horzcat(correctPhonemes{:});
-            isPhonemeCorrect = horzcat(isPhonemeCorrect{:});
+            % Get cell array of true phonemes
+            truePhonemes = trueStruct(1).phonemes;
+            
+            % Convert words to phonemes if response is non-empty (i.e. not
+            % "I don't know"). If response is empty (i.e. "I don't know"),
+            % then there are no correct phonemes
+            if ~isempty(responseWords)
+                responsePhonemes = sttUtilConvertWordsToPhonemes(strsplit(lower(responseWords)), dictionary);
+                isPhonemeCorrect = analyzeCorrectPhonemes(responsePhonemes, truePhonemes);
+                truePhonemes = horzcat(truePhonemes{:});
+                isPhonemeCorrect = horzcat(isPhonemeCorrect{:});
+            else
+                truePhonemes = horzcat(truePhonemes{:});
+                isPhonemeCorrect = zeros(1, numel(truePhonemes));
+            end
             
             % Accumulate total # of correct phonemes and total phonemes
-            taskInfo.performance.numPhonemes = taskInfo.performance.numPhonemes + numel(correctPhonemes);
+            taskInfo.performance.numPhonemes = taskInfo.performance.numPhonemes + numel(truePhonemes);
             taskInfo.performance.numCorrectPhonemes = taskInfo.performance.numCorrectPhonemes + sum(isPhonemeCorrect);
             
             % Score phoneme by phoneme basis
-            for j = 1:numel(correctPhonemes)
-                idx = cell2mat(cellfun(@(c)isequal(c, correctPhonemes{j}), extractfield(taskInfo.performance.phonemeStruct,'phoneme'), 'UniformOutput', false));
+            for j = 1:numel(truePhonemes)
+                idx = cell2mat(cellfun(@(c)isequal(c, truePhonemes{j}), extractfield(taskInfo.performance.phonemeStruct,'phoneme'), 'UniformOutput', false));
                 taskInfo.performance.phonemeStruct(idx).correct = taskInfo.performance.phonemeStruct(idx).correct + isPhonemeCorrect(j);
                 taskInfo.performance.phonemeStruct(idx).total = taskInfo.performance.phonemeStruct(idx).total + 1;
             end

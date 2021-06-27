@@ -17,7 +17,7 @@ function formatted_sentence = formatSentence(sentence)
     
     % Return blank string if sentence is "I don't know" (has to match 
     % exactly)
-    if strcmp(sentence, 'I DON''T KNOW')
+    if strcmp(temp, 'I DON''T KNOW')
         formatted_sentence = '';
         return
     end

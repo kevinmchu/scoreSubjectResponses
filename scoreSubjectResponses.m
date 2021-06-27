@@ -48,6 +48,10 @@ function scoreSubjectResponses(subject, inDir, outDir, inFile, isSorted, scorePh
             for j = 1:numel(fields)
                 allTaskInfo(k).(fields{j}) = taskInfo.(fields{j});
             end
+            
+            % Get stimulus tokens
+            allTaskInfo(k).wavFiles = taskListObj.taskList{1, i}.stimulusList;
+            
             k = k+1;
         end
     end
